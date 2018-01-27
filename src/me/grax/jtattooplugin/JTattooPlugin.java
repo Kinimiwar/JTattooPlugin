@@ -7,18 +7,17 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JRadioButtonMenuItem;
-import javax.swing.SwingUtilities;
+import javax.swing.LookAndFeel;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
 import org.objectweb.asm.tree.ClassNode;
 
-import com.alee.laf.WebLookAndFeel;
-
 import me.grax.jbytemod.JByteMod;
 import me.grax.jbytemod.plugin.Plugin;
 
 public class JTattooPlugin extends Plugin {
+
 
   public JTattooPlugin() {
     super("Look and Feel", "1.1", "GraxCode");
@@ -50,21 +49,18 @@ public class JTattooPlugin extends Plugin {
     jmb.add(theme);
   }
 
+  private Class<?> wlaf;
+  private LookAndFeel weblaf;
   private void addWebLaF(ButtonGroup group, JMenu theme) {
+    wlaf = null;
+    boolean installed = false;
+    weblaf = null;
     try {
-      Class<?> wlaf = Class.forName("com.alee.laf.WebLookAndFeel");
-      JRadioButtonMenuItem menuItem = new JRadioButtonMenuItem("WebLaF");
-      menuItem.addActionListener(e -> {
-        try {
-          wlaf.getMethod("install").invoke(null, new Object[0]);
-        } catch (Throwable e1) {
-          JOptionPane.showMessageDialog(null, "Couldn't set Look and Feel: " + e1.getMessage());
-          e1.printStackTrace();
-        }
-      });
-      group.add(menuItem);
-      theme.add(menuItem);
-      menuItem.setSelected((boolean) wlaf.getMethod("isInstalled").invoke(null, new Object[0]));
+      wlaf = Class.forName("com.alee.laf.WebLookAndFeel");
+      installed = (boolean) wlaf.getMethod("isInstalled").invoke(null, new Object[0]);
+      if(installed && UIManager.getLookAndFeel().getName().equals("WebLookAndFeel")) {
+        weblaf = UIManager.getLookAndFeel();
+      }
     } catch (ClassNotFoundException e) {
       System.out.println("WebLaF not found!");
       return;
@@ -72,6 +68,23 @@ public class JTattooPlugin extends Plugin {
       e.printStackTrace();
       return;
     }
+    JRadioButtonMenuItem menuItem = new JRadioButtonMenuItem("WebLaF");
+    menuItem.addActionListener(e -> {
+      try {
+        if(weblaf != null) {
+          JByteMod.instance.changeUI(weblaf.getClass().getName());
+        }
+        //somehow doesn't work :/
+        //wlaf.getMethod("install").invoke(null, new Object[0]);
+      } catch (Throwable e1) {
+        JOptionPane.showMessageDialog(null, "Couldn't set Look and Feel: " + e1.getMessage());
+        e1.printStackTrace();
+      }
+    });
+    group.add(menuItem);
+    theme.add(menuItem);
+    menuItem.setSelected(installed);
+    menuItem.setEnabled(installed);
   }
 
   private void addJTattooLooks(ButtonGroup group, JMenu theme) {
