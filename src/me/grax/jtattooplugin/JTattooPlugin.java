@@ -13,11 +13,12 @@ import javax.swing.UIManager.LookAndFeelInfo;
 
 import org.objectweb.asm.tree.ClassNode;
 
+import com.alee.laf.WebLookAndFeel;
+
 import me.grax.jbytemod.JByteMod;
 import me.grax.jbytemod.plugin.Plugin;
 
 public class JTattooPlugin extends Plugin {
-
 
   public JTattooPlugin() {
     super("Look and Feel", "1.1", "GraxCode");
@@ -49,18 +50,11 @@ public class JTattooPlugin extends Plugin {
     jmb.add(theme);
   }
 
-  private Class<?> wlaf;
-  private LookAndFeel weblaf;
   private void addWebLaF(ButtonGroup group, JMenu theme) {
-    wlaf = null;
     boolean installed = false;
-    weblaf = null;
     try {
-      wlaf = Class.forName("com.alee.laf.WebLookAndFeel");
+      Class<?> wlaf = Class.forName("com.alee.laf.WebLookAndFeel");
       installed = (boolean) wlaf.getMethod("isInstalled").invoke(null, new Object[0]);
-      if(installed && UIManager.getLookAndFeel().getName().equals("WebLookAndFeel")) {
-        weblaf = UIManager.getLookAndFeel();
-      }
     } catch (ClassNotFoundException e) {
       System.out.println("WebLaF not found!");
       return;
@@ -71,9 +65,7 @@ public class JTattooPlugin extends Plugin {
     JRadioButtonMenuItem menuItem = new JRadioButtonMenuItem("WebLaF");
     menuItem.addActionListener(e -> {
       try {
-        if(weblaf != null) {
-          JByteMod.instance.changeUI(weblaf.getClass().getName());
-        }
+        JByteMod.instance.changeUI("com.alee.laf.WebLookAndFeel");
         //somehow doesn't work :/
         //wlaf.getMethod("install").invoke(null, new Object[0]);
       } catch (Throwable e1) {
@@ -84,7 +76,6 @@ public class JTattooPlugin extends Plugin {
     group.add(menuItem);
     theme.add(menuItem);
     menuItem.setSelected(installed);
-    menuItem.setEnabled(installed);
   }
 
   private void addJTattooLooks(ButtonGroup group, JMenu theme) {
@@ -121,6 +112,9 @@ public class JTattooPlugin extends Plugin {
     });
     group.add(menuItem);
     theme.add(menuItem);
+    if (classname.equals(UIManager.getLookAndFeel().getClass().getName())) {
+      menuItem.setSelected(true);
+    }
   }
 
   @Override
